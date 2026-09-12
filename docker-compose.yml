@@ -39,11 +39,12 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-fixops}:${POSTGRES_PASSWORD:-fixops}@postgres:5432/${POSTGRES_DB:-fixops}
       AGENT_URL: ${AGENT_URL:-http://host.docker.internal:4318}
       AGENT_ENROLLMENT_TOKEN: ${AGENT_ENROLLMENT_TOKEN:-change-me}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
-      OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
-      OPENROUTER_SITE_URL: ${PUBLIC_BASE_URL:-http://localhost:3000}
-      OPENROUTER_APP_NAME: ${OPENROUTER_APP_NAME:-FixOps}
-      OPENROUTER_ZDR: ${OPENROUTER_ZDR:-true}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_APP_NAME: ${AI_APP_NAME:-}
+      AI_APP_URL: ${AI_APP_URL:-}
+      AI_ORGANIZATION: ${AI_ORGANIZATION:-}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       GITHUB_APP_ID: ${GITHUB_APP_ID:-}
       GITHUB_PRIVATE_KEY: ${GITHUB_PRIVATE_KEY:-}
@@ -71,9 +72,12 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-fixops}:${POSTGRES_PASSWORD:-fixops}@postgres:5432/${POSTGRES_DB:-fixops}
       AGENT_URL: ${AGENT_URL:-http://host.docker.internal:4318}
       AGENT_ENROLLMENT_TOKEN: ${AGENT_ENROLLMENT_TOKEN:-change-me}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
-      OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
-      OPENROUTER_ZDR: ${OPENROUTER_ZDR:-true}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_APP_NAME: ${AI_APP_NAME:-}
+      AI_APP_URL: ${AI_APP_URL:-}
+      AI_ORGANIZATION: ${AI_ORGANIZATION:-}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       GITHUB_APP_ID: ${GITHUB_APP_ID:-}
       GITHUB_PRIVATE_KEY: ${GITHUB_PRIVATE_KEY:-}

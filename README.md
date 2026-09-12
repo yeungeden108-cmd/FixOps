@@ -1,6 +1,6 @@
 # FixOps
 
-FixOps 是一个自托管的 AI 服务可靠性控制面：它发现 Docker Compose 服务，为 Node.js/TypeScript 应用建立 liveness/readiness 检查，持续探测服务，在连续故障时先重启一次，然后在隔离工作区使用 OpenRouter 诊断、修复、测试、备份、部署并自动回滚。
+FixOps 是一个自托管的 AI 服务可靠性控制面：它发现 Docker Compose 服务，为 Node.js/TypeScript 应用建立 liveness/readiness 检查，持续探测服务，在连续故障时先重启一次，然后在隔离工作区使用用户指定的 ChatGPT 协议兼容 API（包括 Happy API）诊断、修复、测试、备份、部署并自动回滚。
 
 ## 快速开始
 
@@ -50,7 +50,7 @@ pnpm demo:up
 Compose 文件：compose.yaml
 Compose project name：fixops-demo
 GitHub owner/repo：demo/checkout-lab（演示值即可）
-模型：openrouter/auto（没有 API key 时也可先演示探测和重启）
+模型：由你填写，例如 `gpt-4o-mini`（没有 API key 时也可先演示探测和重启）
 通知邮箱：留空（使用控制台站内通知）
 ```
 
@@ -66,7 +66,7 @@ docker compose up -d --build
 
 Linux 上如果 API/Worker 以容器连接宿主机 Agent，请让 Agent 监听宿主机可达的私有地址（例如 `AGENT_HOST=0.0.0.0`，并用防火墙限制 4318 端口）；Agent 始终要求 `AGENT_ENROLLMENT_TOKEN`。Windows Docker Desktop 会通过 `host.docker.internal` 连接。
 
-首次部署前，把 `.env` 中的 `OPENROUTER_API_KEY`、`AGENT_ENROLLMENT_TOKEN` 和 GitHub Webhook Secret 填好。SMTP 是可选配置：即使 `SMTP_HOST` 等字段为空，事故开始/结束通知仍会保存到控制台的站内通知（右上角铃铛），配置 SMTP 后才会额外发送邮件。控制台默认在 `http://127.0.0.1:3000`；不建议把未加认证的控制台暴露到公网。GitHub Webhook 可以通过反向代理只暴露 `/api/v1/webhooks/github`，请求必须携带有效 HMAC 签名。
+首次部署前，把 `.env` 中的 `AGENT_ENROLLMENT_TOKEN` 和 GitHub Webhook Secret 填好。AI 可以通过环境变量 `AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL`、`AI_APP_NAME`、`AI_APP_URL`、`AI_ORGANIZATION` 设置全局默认值，也可以在每个项目中填写；这些字段按 ChatGPT/OpenAI Chat Completions 协议发送。SMTP 是可选配置：即使 `SMTP_HOST` 等字段为空，事故开始/结束通知仍会保存到控制台的站内通知（右上角铃铛），配置 SMTP 后才会额外发送邮件。控制台默认在 `http://127.0.0.1:3000`；不建议把未加认证的控制台暴露到公网。GitHub Webhook 可以通过反向代理只暴露 `/api/v1/webhooks/github`，请求必须携带有效 HMAC 签名。
 
 ## 接入项目
 
@@ -83,7 +83,13 @@ curl -X POST http://127.0.0.1:3000/api/v1/projects \
       "projectPath": "/srv/projects/payments",
       "composeFiles": ["compose.yaml"],
       "composeProjectName": "payments",
-      "modelId": "anthropic/claude-sonnet-4.5",
+      "ai": {
+        "baseUrl": "https://your-happy-api.example/v1",
+        "apiKey": "your-api-key",
+        "model": "your-model-name",
+        "appName": "FixOps",
+        "appUrl": "https://your-app.example"
+      },
       "maxIncidentCostUsd": 2,
       "locale": "zh-CN",
       "notificationEmails": []
@@ -91,7 +97,7 @@ curl -X POST http://127.0.0.1:3000/api/v1/projects \
   }'
 ```
 
-`modelId` 必须从 `GET /api/v1/openrouter/models` 返回的兼容模型中选择。项目目录必须位于 Agent 的允许根目录中。应用镜像不能依赖生产源码 bind mount；数据库迁移、密钥、数据卷、端口和 CI 工作流不会被 AI 自动修改。
+`ai.baseUrl` 填写兼容网关的 `/v1` 地址，`ai.model` 和 `ai.appName` 不再硬编码，完全由项目接入者填写。API Key 只保存在后端，项目返回值只会显示 `apiKeyConfigured`。项目目录必须位于 Agent 的允许根目录中。应用镜像不能依赖生产源码 bind mount；数据库迁移、密钥、数据卷、端口和 CI 工作流不会被 AI 自动修改。
 
 ## API 入口
 
@@ -105,6 +111,10 @@ curl -X POST http://127.0.0.1:3000/api/v1/projects \
 - `POST /api/v1/incidents/:id/retry`
 - `POST /api/v1/incidents/:id/rollback`
 - `GET /api/v1/notifications`、`POST /api/v1/notifications/:id/read`
+- `GET /api/v1/ai/config`
+- `GET/POST /api/v1/ai/models`
+- `POST /api/v1/ai/test`
+- `PATCH /api/v1/projects/:id/ai`
 - `GET /api/v1/events`（SSE）
 - `POST /api/v1/webhooks/github`
 - `GET /api/v1/openapi.json`
@@ -121,4 +131,4 @@ pnpm test
 pnpm build
 ```
 
-不配置 SMTP 也可以完成本地功能测试：通知会显示在控制台右上角的铃铛中，点击通知即可标记已读。没有 OpenRouter key 时可先测试 Compose 发现、健康检查、受控重启、事故状态和站内通知；要测试 AI 诊断/补丁/PR，再配置 OpenRouter（GitHub 凭证仅用于真实创建 PR）。完整恢复演练需要真实 Docker Engine；SMTP 只在需要验证邮件发送时配置。
+不配置 SMTP 也可以完成本地功能测试：通知会显示在控制台右上角的铃铛中，点击通知即可标记已读。没有 AI Key 时可先测试 Compose 发现、健康检查、受控重启、事故状态和站内通知；要测试 AI 诊断/补丁/PR，在项目配置中填写 ChatGPT 兼容网关地址、API Key、模型名称和 App 信息，并可先调用 `POST /api/v1/ai/test` 验证连通性。完整恢复演练需要真实 Docker Engine；SMTP 只在需要验证邮件发送时配置。

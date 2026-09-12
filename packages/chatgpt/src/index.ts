@@ -153,7 +153,7 @@ export class ChatGPTClient {
     if (this.config.organization) headers.set("OpenAI-Organization", this.config.organization);
     if (this.config.appName) {
       // X-App-Name is understood by Happy-compatible gateways; X-Title keeps
-      // compatibility with gateways that adopted OpenRouter's app header.
+      // compatibility with gateways that use the common app-title header.
       headers.set("X-App-Name", this.config.appName);
       headers.set("X-Title", this.config.appName);
     }

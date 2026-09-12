@@ -12,7 +12,7 @@ describe("FixOps API", () => {
     const fakeGithub = {} as GitHubService; const fakeMailer = {} as IncidentMailer;
     const server = await buildServer({ repository, agent: fakeAgent, chatgpt: fakeChatGPT, aiConnectionFactory: () => fakeChatGPT, github: fakeGithub, mailer: fakeMailer });
     const health = await server.app.inject({ method: "GET", url: "/health/live" }); expect(health.statusCode).toBe(200);
-    const response = await server.app.inject({ method: "POST", url: "/api/v1/projects", payload: { name: "Demo", config: { github: { owner: "acme", repo: "demo" }, agentId: "agent", projectPath: ".", composeFiles: ["compose.yaml"], composeProjectName: "demo", modelId: "openrouter/auto" } } });
+    const response = await server.app.inject({ method: "POST", url: "/api/v1/projects", payload: { name: "Demo", config: { github: { owner: "acme", repo: "demo" }, agentId: "agent", projectPath: ".", composeFiles: ["compose.yaml"], composeProjectName: "demo", modelId: "gpt-test" } } });
     expect(response.statusCode).toBe(201); expect(JSON.parse(response.body).name).toBe("Demo"); expect(JSON.parse(response.body).config.notificationEmails).toEqual([]);
     const projects = await server.app.inject({ method: "GET", url: "/api/v1/projects" }); expect(JSON.parse(projects.body)).toHaveLength(1);
     const project = JSON.parse(response.body) as { id: string };
