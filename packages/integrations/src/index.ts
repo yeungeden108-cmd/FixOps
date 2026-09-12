@@ -95,13 +95,14 @@ export class IncidentMailer {
 }
 
 export function redactConfigForExternal(config: ProjectConfig): Record<string, unknown> {
+  const ai = config.ai ?? {};
   return {
     ...config,
     github: { ...config.github, installationId: config.github.installationId ? "[configured]" : undefined },
     notificationEmails: config.notificationEmails.map(() => "[configured]"),
     ai: {
-      ...config.ai,
-      ...(config.ai.apiKey ? { apiKey: "[configured]" } : {}),
+      ...ai,
+      ...(ai.apiKey ? { apiKey: "[configured]" } : {}),
     },
   };
 }

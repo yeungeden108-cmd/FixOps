@@ -26,11 +26,12 @@ const engine = new IncidentEngine({
   }),
   aiFactory: (config: ProjectConfig) => {
     const settings: ChatGPTConfig = {};
-    const apiKey = config.ai.apiKey ?? process.env.AI_API_KEY;
-    const baseUrl = config.ai.baseUrl || process.env.AI_BASE_URL;
-    const appName = config.ai.appName ?? process.env.AI_APP_NAME;
-    const appUrl = config.ai.appUrl ?? process.env.AI_APP_URL;
-    const organization = config.ai.organization ?? process.env.AI_ORGANIZATION;
+    const projectAi = config.ai ?? {};
+    const apiKey = projectAi.apiKey ?? process.env.AI_API_KEY;
+    const baseUrl = projectAi.baseUrl || process.env.AI_BASE_URL;
+    const appName = projectAi.appName ?? process.env.AI_APP_NAME;
+    const appUrl = projectAi.appUrl ?? process.env.AI_APP_URL;
+    const organization = projectAi.organization ?? process.env.AI_ORGANIZATION;
     if (apiKey) settings.apiKey = apiKey;
     if (baseUrl) settings.baseUrl = baseUrl;
     if (appName) settings.appName = appName;

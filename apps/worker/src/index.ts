@@ -58,7 +58,7 @@ export class IncidentEngine {
   }
 
   private modelFor(project: ProjectRecord): string {
-    const model = project.config.ai.model ?? project.config.modelId ?? process.env.AI_MODEL ?? "";
+    const model = project.config.ai?.model ?? project.config.modelId ?? process.env.AI_MODEL ?? "";
     if (!model.trim()) throw new ChatGPTError("AI model name is not configured for this project", 400);
     return model.trim();
   }

@@ -25,13 +25,14 @@ class EventHub {
 function jsonError(reply: FastifyReply, status: number, detail: string): FastifyReply { return reply.code(status).type("application/problem+json").send({ type: "about:blank", title: status >= 500 ? "FixOps server error" : "Invalid request", status, detail }); }
 function requireUuid(value: string): string { if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) throw new Error("Expected UUID"); return value; }
 function aiConfigFromProject(config: ProjectConfig): AiProviderConfig {
+  const projectAi = config.ai ?? {};
   return {
-    baseUrl: config.ai.baseUrl || process.env.AI_BASE_URL || "https://api.openai.com/v1",
-    ...(config.ai.apiKey ?? process.env.AI_API_KEY ? { apiKey: config.ai.apiKey ?? process.env.AI_API_KEY } : {}),
-    ...(config.ai.model ?? config.modelId ?? process.env.AI_MODEL ? { model: config.ai.model ?? config.modelId ?? process.env.AI_MODEL } : {}),
-    ...(config.ai.appName ?? process.env.AI_APP_NAME ? { appName: config.ai.appName ?? process.env.AI_APP_NAME } : {}),
-    ...(config.ai.appUrl ?? process.env.AI_APP_URL ? { appUrl: config.ai.appUrl ?? process.env.AI_APP_URL } : {}),
-    ...(config.ai.organization ?? process.env.AI_ORGANIZATION ? { organization: config.ai.organization ?? process.env.AI_ORGANIZATION } : {}),
+    baseUrl: projectAi.baseUrl || process.env.AI_BASE_URL || "https://api.openai.com/v1",
+    ...(projectAi.apiKey ?? process.env.AI_API_KEY ? { apiKey: projectAi.apiKey ?? process.env.AI_API_KEY } : {}),
+    ...(projectAi.model ?? config.modelId ?? process.env.AI_MODEL ? { model: projectAi.model ?? config.modelId ?? process.env.AI_MODEL } : {}),
+    ...(projectAi.appName ?? process.env.AI_APP_NAME ? { appName: projectAi.appName ?? process.env.AI_APP_NAME } : {}),
+    ...(projectAi.appUrl ?? process.env.AI_APP_URL ? { appUrl: projectAi.appUrl ?? process.env.AI_APP_URL } : {}),
+    ...(projectAi.organization ?? process.env.AI_ORGANIZATION ? { organization: projectAi.organization ?? process.env.AI_ORGANIZATION } : {}),
   };
 }
 
@@ -116,7 +117,8 @@ export async function buildServer(dependencies: ApiDependencies = {}): Promise<{
   app.patch<{ Params: { projectId: string } }>("/api/v1/projects/:projectId", async (request, reply) => { try {
     const id = requireUuid(request.params.projectId); const current = await repository.getProject(id); if (!current) return jsonError(reply, 404, "Project not found");
     const body = (request.body ?? {}) as Partial<ProjectConfig>;
-    const candidate = { ...current.config, ...body, ai: body.ai ? { ...current.config.ai, ...body.ai, ...(body.ai.apiKey === "********" ? { apiKey: current.config.ai.apiKey } : {}) } : current.config.ai };
+    const currentAi = current.config.ai ?? {};
+    const candidate = { ...current.config, ...body, ai: body.ai ? { ...currentAi, ...body.ai, ...(body.ai.apiKey === "********" ? { apiKey: currentAi.apiKey } : {}) } : currentAi };
     const parsed = ProjectCreateSchema.shape.config.safeParse(candidate); if (!parsed.success) return jsonError(reply, 400, parsed.error.message);
     try { validateAiSettings(parsed.data); } catch (error) { return jsonError(reply, 400, error instanceof Error ? error.message : "Invalid AI settings"); }
     const updated = await repository.updateProject(id, { config: parsed.data }); return updated ? reply.send(publicProject(updated)) : jsonError(reply, 404, "Project not found");
@@ -152,8 +154,9 @@ export async function buildServer(dependencies: ApiDependencies = {}): Promise<{
     const bodySchema = AiProviderConfigSchema.partial().extend({ clearApiKey: z.boolean().optional() });
     const parsed = bodySchema.safeParse(request.body); if (!parsed.success) return jsonError(reply, 400, parsed.error.message);
     const { clearApiKey, ...updates } = parsed.data;
-    const nextAi: Record<string, unknown> = { ...current.config.ai, ...updates };
-    if (updates.apiKey === "********") nextAi.apiKey = current.config.ai.apiKey;
+    const currentAi = current.config.ai ?? {};
+    const nextAi: Record<string, unknown> = { ...currentAi, ...updates };
+    if (updates.apiKey === "********") nextAi.apiKey = currentAi.apiKey;
     if (clearApiKey) delete nextAi.apiKey;
     const nextConfig = ProjectCreateSchema.shape.config.parse({ ...current.config, ai: nextAi });
     validateAiSettings(nextConfig);
@@ -166,7 +169,8 @@ export async function buildServer(dependencies: ApiDependencies = {}): Promise<{
     if (request.query.projectId) {
       const project = await repository.getProject(requireUuid(request.query.projectId)); if (!project) return jsonError(reply, 404, "Project not found");
       const settings = aiConfigFromProject(project.config);
-      if (!settings.apiKey && !process.env.AI_BASE_URL && !project.config.ai.model && !project.config.modelId) return reply.send({ data: [], source: "unconfigured" });
+      const projectAi = project.config.ai ?? {};
+      if (!settings.apiKey && !process.env.AI_BASE_URL && !projectAi.baseUrl) return reply.send({ data: [], source: "unconfigured" });
       client = dependencies.aiFactory?.(project.config) ?? new ChatGPTClient(settings);
     } else if (!process.env.AI_API_KEY && !process.env.AI_BASE_URL) {
       return reply.send({ data: [], source: "unconfigured" });

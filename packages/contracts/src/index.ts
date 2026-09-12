@@ -5,7 +5,9 @@ export type Locale = z.infer<typeof LocaleSchema>;
 
 /** Settings for a user-selected OpenAI/ChatGPT-compatible API gateway. */
 export const AiProviderConfigSchema = z.object({
-  baseUrl: z.string().url().default("https://api.openai.com/v1"),
+  // Optional so AI_BASE_URL can act as a global fallback for projects that
+  // only provide a model name in their own settings.
+  baseUrl: z.string().url().optional(),
   // Never expose this value from a project response; the API masks it.
   apiKey: z.string().min(1).optional(),
   model: z.string().min(1).optional(),
