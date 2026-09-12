@@ -1,0 +1,8 @@
+services:
+  checkout-demo:
+    critical: true
+    baseUrl: http://127.0.0.1:4100
+    port: 4100
+    livenessPath: /health/live
+    readinessPath: /health/ready
+    enabled: true

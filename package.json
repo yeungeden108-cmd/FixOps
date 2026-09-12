@@ -1,0 +1,33 @@
+{
+  "name": "fixops",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-powered service health monitoring and safe auto-remediation platform",
+  "packageManager": "pnpm@11.19.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"pnpm --filter @fixops/api dev\" \"pnpm --filter @fixops/worker dev\" \"pnpm --filter @fixops/agent dev\" \"pnpm --filter @fixops/web dev\" \"pnpm --filter @fixops/demo dev\"",
+    "dev:api": "pnpm --filter @fixops/api dev",
+    "dev:worker": "pnpm --filter @fixops/worker dev",
+    "dev:agent": "pnpm --filter @fixops/agent dev",
+    "dev:demo": "pnpm --filter @fixops/demo dev",
+    "demo:up": "docker compose -f demo/compose.yaml up -d --build",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm build && pnpm -r typecheck",
+    "test": "pnpm build && vitest run",
+    "test:watch": "vitest",
+    "db:push": "tsx packages/db/src/migrate.ts",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "concurrently": "^9.1.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

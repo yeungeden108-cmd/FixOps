@@ -1,0 +1,29 @@
+name: fixops-demo
+
+services:
+  checkout-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4100:4100"
+    environment:
+      PORT: 4100
+      NODE_ENV: production
+    labels:
+      fixops.enabled: "true"
+      fixops.critical: "true"
+      fixops.port: "4100"
+      fixops.base_url: "http://127.0.0.1:4100"
+      fixops.liveness_path: /health/live
+      fixops.readiness_path: /health/ready
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:4100/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      start_period: 3s

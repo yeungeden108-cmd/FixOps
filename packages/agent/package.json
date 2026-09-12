@@ -1,0 +1,27 @@
+{
+  "name": "@fixops/agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@fixops/contracts": "workspace:*",
+    "@fixops/core": "workspace:*",
+    "dockerode": "^4.0.2",
+    "dotenv": "^16.4.7",
+    "execa": "^9.5.2",
+    "fastify": "^5.1.0",
+    "yaml": "^2.6.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/dockerode": "^3.3.31"
+  }
+}
